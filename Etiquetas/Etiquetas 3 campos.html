@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <title>Teste Div carta com linhas 3 campos</title>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #folhaCarta {
+            page-break-after: always;
+            width: 816px;
+            height: 1056px;
+            display: flex;
+            border: 1px solid red;
+            margin: 0px;
+            padding: 0px;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #conteiner {
+            width: 705px;
+            height: 960px;
+            display: flex;
+            margin: 0px;
+            justify-content: space-between;
+            border: 1px solid blue;
+            flex-wrap: wrap;
+            align-items: center;
+            align-content: center;
+            flex-direction: column;
+            padding: 0px;
+        }
+
+        #linha {
+            width: 100%;
+            height: 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            flex-direction: column;
+            align-content: space-between;
+            margin: 0px;
+            padding: 0px;
+        }
+
+        .etiqueta {
+            display: flex;
+            width: 168px;
+            height: 100%;
+            border: 2px solid #000;
+            align-items: center;
+            flex-wrap: wrap;
+            flex-direction: column;
+            align-content: center;
+            margin: 0px;
+            padding: 0px;
+            justify-content: center;
+        }
+
+        .input-Field {
+            width: 95%;
+            height: 33%;
+            font-size: 8px;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+        }
+
+        #barraLateral {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            flex-direction: column;
+        }
+
+        #separadorBarra {
+            width: 100%;
+            height: 33%;
+            display: flex;
+            justify-content: flex-start;
+            justify-items: center;
+            flex-direction: column;
+            align-items: center;
+            flex-wrap: wrap;
+            align-content: center;
+        }
+
+        .button {
+            max-height: 50px;
+            margin-top: 10px;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
+            transition: background-color 0.3s;
+        }
+
+        #filtroAtivoCriterio {
+            width: 100%;
+            height: 16px;
+            background-color: red;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        @media print {
+            ::placeholder {
+                color: transparent;
+            }
+            * {
+                border: none !important;
+            }
+            #barraLateral {
+                display: none;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+    <div id="barraLateral">
+
+        <div id="separadorBarra">
+            <button class="button" onclick="adicionarFolha()">Adicionar Folha</button>
+            <button class="button" onclick="excluirUltimaFolha()">Excluir Folha</button>
+        </div>
+
+        <div id="separadorBarra">
+            <button class="button" id="fileInputButton" onclick="document.getElementById('input').click()">Selecionar
+                Arquivo</button>
+            <input type="file" id="input" style="display:none;" accept=".xlsx, .xls">
+            <button class="button" id="printButton" onclick="window.print()">Imprimir</button>
+        </div>
+
+        <div id="separadorBarra">
+            <!-- Filtro geral-->
+
+            <select id="filtro" class="button" onchange="zeralistas(this.value)">
+                <option value="">Filtro</option>
+                <option value="Tudo">Tudo</option>
+            </select>
+
+            <!-- Criterio de aceitacao-->
+
+            <button class="button" id="filtroCriterioButton" onclick="criterio()">Ativa ou desativa somente "aprovado
+                com
+                tolerância"</button>
+            <div id="filtroAtivoCriterio" style="display: none;">Filtro Ativo</div>
+        </div>
+    </div>
+
+    </div>
+
+    </div>
+    <script>
+        let totalFolhas = 0;
+        let dataDict = {};
+        let filtroCriterio = 0;
+        let filtroSomenteIM = 0;
+        let valorFiltro = "";
+        let imImprimir = [];
+
+        function adicionarFolha() {
+            var folhaCarta = document.createElement('div');
+            folhaCarta.id = 'folhaCarta';
+            var conteiner = document.createElement('div');
+            conteiner.id = 'conteiner';
+            for (var i = 0; i < 20; i++) {
+                var linha = document.createElement('div');
+                linha.id = 'linha';
+                for (var j = 0; j < 4; j++) {
+                    var etiqueta = document.createElement('div');
+                    etiqueta.className = 'etiqueta';
+                    for (var k = 0; k < 3; k++) {
+                        var input = document.createElement('input');
+                        input.className = 'input-Field';
+                        input.type = 'text';
+                        input.placeholder = 'Digite aqui.';
+                        etiqueta.appendChild(input);
+                    }
+                    linha.appendChild(etiqueta);
+                }
+                conteiner.appendChild(linha);
+            }
+            totalFolhas++;
+            folhaCarta.appendChild(conteiner);
+            document.body.appendChild(folhaCarta);
+        };
+        //Função de excluir folhas
+        function excluirUltimaFolha() {
+            var folhaCarta = document.querySelector('#folhaCarta');
+            console.log(totalFolhas);
+            if (folhaCarta && totalFolhas != 0) {
+                folhaCarta.remove();
+                totalFolhas--;
+            }
+            else {
+                alert("Não tem folhas para excluir.");
+
+            }
+        }
+
+        //Função de excluir folhas em branco
+        function removeFolhasEmBranco() {
+            var folhas = document.querySelectorAll('#folhaCarta');
+            folhas.forEach(function (folha) {
+                var inputs = folha.querySelectorAll('input');
+                var hasValue = false;
+                inputs.forEach(function (input) {
+                    if (input.value.trim() !== '') {
+                        hasValue = true;
+                    }
+                });
+                if (!hasValue) {
+                    folha.remove();
+                    totalFolhas--;
+                }
+            });
+        }
+
+        // Função para ler e processar o arquivo Excel selecionado
+        document.getElementById('input').addEventListener('change', function (e) {
+            var files = e.target.files;
+            if (files.length == 0) return;
+
+            var file = files[0];
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, { type: 'array' });
+
+                var sheetName = workbook.SheetNames[0];
+                var sheet = workbook.Sheets[sheetName];
+                var range = XLSX.utils.decode_range(sheet['!ref']);
+                var filtroDropdown = document.getElementById('filtro');
+                var localizacoes = [];
+
+                for (var rowNum = 6; rowNum <= range.e.r; rowNum++) {
+                    var cellA = sheet[XLSX.utils.encode_cell({ c: 0, r: rowNum })]; // Coluna A
+                    var cellC = sheet[XLSX.utils.encode_cell({ c: 2, r: rowNum })]; // Coluna C
+                    var cellB = sheet[XLSX.utils.encode_cell({ c: 1, r: rowNum })]; // Coluna B
+                    var cellI = sheet[XLSX.utils.encode_cell({ c: 8, r: rowNum })]; // Coluna I
+                    var cellJ = sheet[XLSX.utils.encode_cell({ c: 9, r: rowNum })]; // Coluna J
+
+                    if (cellA != null) {
+
+                        var valueJ = cellJ ? cellJ.v : ''; // Coluna J
+                        var valueA = cellA ? cellA.v : ''; // Coluna A
+                        var valueB = cellB ? cellB.v : ''; // Coluna B
+                        var valueC = cellC ? cellC.v : ''; // Coluna C
+                        var valueI = cellI ? cellI.v : ''; // Coluna I
+
+                        dataDict[rowNum - 6] = {
+                            "Identificação": valueA,
+                            "Equipamentos": valueB,
+                            "Localização": valueC,
+                            "Criterio": valueI,
+                            "Resultado": valueJ
+                        };
+
+                        // Preencher o dropdown com os nomes de Localização
+                        if (!localizacoes.includes(valueC)) {
+                            localizacoes.push(valueC);
+                            var option = document.createElement('option');
+                            option.text = valueC;
+                            option.value = valueC;
+                            filtroDropdown.appendChild(option);
+                        }
+                    }
+                }
+            };
+            //ordenacao do documento
+            dataDict = ordenarPorEquipamentos(dataDict);
+            dataDict = ordenarPorIdentificacao(dataDict);
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Funcao para ordenar por equipamentos
+        function ordenarPorEquipamentos(dataDict) {
+            var dataArray = Object.values(dataDict);
+            dataArray.sort(function (a, b) {
+                var equipA = a["Equipamentos"].toUpperCase();
+                var equipB = b["Equipamentos"].toUpperCase();
+                if (equipA < equipB) {
+                    return -1;
+                }
+                if (equipA > equipB) {
+                    return 1;
+                }
+                return 0;
+            });
+            return dataArray;
+        }
+
+        // Ordena por Identificação
+        function ordenarPorIdentificacao(dataDict) {
+            var dataArray = Object.values(dataDict);
+            dataArray.sort(function (a, b) {
+                var idA = a["Identificação"].toUpperCase();
+                var idB = b["Identificação"].toUpperCase();
+                if (idA < idB) {
+                    return -1;
+                }
+                if (idA > idB) {
+                    return 1;
+                }
+                return 0;
+            });
+            return dataArray;
+        }
+
+        function criterio() {
+            //FIltro desativado
+            var div = document.getElementById('filtroAtivoCriterio');
+            if (filtroCriterio === 0) {
+                div.style.display = 'block';
+                filtroCriterio = 1;
+            }
+            //Filtro Ativado
+            else {
+                div.style.display = 'none';
+                filtroCriterio = 0;
+            }
+            zeralistas(valorFiltro);
+        }
+
+        // Funcao que ir zerar as lista para que sempre mostre somente o que deve ser exibido
+        function zeralistas(localizacaoSelecionada) {
+            valorFiltro = localizacaoSelecionada;
+            var listaim = [];
+            var listaequi = [];
+            var listares = [];
+            mostrarInformacoes(localizacaoSelecionada, listaim, listaequi, listares);
+        }
+
+        // Funcao que coloca em uma lista para exibir as informacoes
+        function mostrarInformacoes(selecao, listaim, listaequi, listares) {
+
+            if (filtroCriterio === 0) {
+                if (selecao !== "Tudo") {
+                    for (let key in dataDict) {
+                        let item = dataDict[key];
+                        if (item["Localização"] === selecao) {
+                            listaim.push(item["Identificação"]);
+                            listaequi.push(item["Equipamentos"]);
+                            listares.push(item["Resultado"]);
+                        }
+                    }
+                } else {
+                    for (let key in dataDict) {
+                        let item = dataDict[key];
+                        listaim.push(item["Identificação"]);
+                        listaequi.push(item["Equipamentos"]);
+                        listares.push(item["Resultado"]);
+                    }
+                }
+            }
+            else {
+                if (selecao !== "Tudo") {
+                    for (let key in dataDict) {
+                        let item = dataDict[key];
+                        if (item["Localização"] === selecao && item["Criterio"] === "-") {
+                            listaim.push(item["Identificação"]);
+                            listaequi.push(item["Equipamentos"]);
+                            listares.push(item["Resultado"]);
+                        }
+                    }
+                } else {
+                    for (let key in dataDict) {
+                        let item = dataDict[key];
+                        if (item["Criterio"] === "-") {
+                            listaim.push(item["Identificação"]);
+                            listaequi.push(item["Equipamentos"]);
+                            listares.push(item["Resultado"]);
+                        }
+                    }
+                }
+            }
+            preencherCampos(listaim, listaequi, listares);
+        }
+
+        // Funcao que preenche automaticamente com os dados os campos
+        function preencherCampos(listaim, listaequi, listares) {
+            var tamanhoListaim = listaim.length;
+            var totalFolhas = tamanhoListaim / 80
+            var restoListaim = tamanhoListaim % 80
+            if (restoListaim !== 0) {
+                totalFolhas++;
+            }
+            for (var i = 1; i <= totalFolhas; i += 1) {
+                adicionarFolha();
+            }
+            var campos = document.querySelectorAll('.input-Field');
+            for (var i = 0; i < campos.length; i += 3) {
+                var index = i / 3;
+                campos[i].value = listaim[index] || '';
+                campos[i + 1].value = listaequi[index] || '';
+                campos[i + 2].value = listares[index] || '';
+            }
+            removeFolhasEmBranco();
+        }
+    </script>
+</body>
+
+</html>
