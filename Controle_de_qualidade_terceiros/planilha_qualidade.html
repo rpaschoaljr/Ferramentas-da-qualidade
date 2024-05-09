@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <title>Controle da qualidade</title>
 </head>
 <style>
@@ -51,13 +52,117 @@
 
 <body>
     <div id="conteinerbutton">
-        <button class="button">Botão 1</button>
-        <button class="button">Botão 2</button>
+        <button class="button" id="fileInputButton" onclick="document.getElementById('input').click()">Carregar</button>
+        <input type="file" id="input" style="display:none;" accept=".xlsx, .xls">
+        <button class="button" onclick="gerar()">Gerar</button>
     </div>
     <div id="conteinerTable"></div>
 </body>
 
 <script>
+    let NotaCorte = 7;
+    let PesoQualidade = 6;
+    let PesoQnt = 2.5;
+    let PesoPontualidade = 1.5;
+    let Pontualidade = 0;
+    let Quantidade = 0;
+    let PontoInspecao = 0;
+    let MediaInspecao = [];
+    let MediaData = [];
+    let MediaQuantidade = [];
+    let dataDict = {};
+    let Agrupamento = [];
+    let QntObjetos = 0;
+    let dataDictFinal = {};
+    document.getElementById('input').addEventListener('change', function (e) {
+        var files = e.target.files;
+        if (files.length === 0) return;
+
+        const file = files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+
+            for (let rowNum = 1; rowNum <= range.e.r; rowNum++) {
+                let cellA = sheet[XLSX.utils.encode_cell({ c: 0, r: rowNum })]; // Coluna A inspeção
+                let cellB = sheet[XLSX.utils.encode_cell({ c: 1, r: rowNum })]; // Coluna B codigo
+                let cellC = sheet[XLSX.utils.encode_cell({ c: 2, r: rowNum })]; // Coluna C razão social
+                let cellD = sheet[XLSX.utils.encode_cell({ c: 3, r: rowNum })]; // Coluna D data prevista
+                let cellE = sheet[XLSX.utils.encode_cell({ c: 4, r: rowNum })]; // Coluna E data real
+                let cellF = sheet[XLSX.utils.encode_cell({ c: 5, r: rowNum })]; // Coluna F quantidade prevista
+                let cellG = sheet[XLSX.utils.encode_cell({ c: 6, r: rowNum })]; // Coluna G quantidade real 
+
+                if (cellA != null) {
+                    let valueA = cellA ? cellA.v : ''; // Coluna A inspeção
+                    let valueB = cellB ? cellB.v : ''; // Coluna B codigo
+                    let valueC = cellC ? cellC.v : ''; // Coluna C razão social
+                    let valueD = cellD ? cellD.v : ''; // Coluna D data prevista
+                    let valueE = cellE ? cellE.v : ''; // Coluna E data real
+                    let valueF = cellF ? cellF.v : ''; // Coluna F quantidade prevista
+                    let valueG = cellG ? cellG.v : ''; // Coluna G quantidade real
+                    valueF = parseFloat(valueF.replace('.', '').replace(',', '.'))
+                    valueG = parseFloat(valueG.replace('.', '').replace(',', '.'))
+                    valueA = valueA.toUpperCase();
+                    if (valueA === "INSPEÇÃO APROVADA") {
+                        PontoInspecao = 1;
+                    }
+                    if (valueA === "INSPEÇÃO REPROVADA") {
+                        PontoInspecao = 0;
+                    }
+                    if (valueE <= valueD) {
+                        Pontualidade = 1;
+                    }
+                    if (valueE > valueD) {
+                        Pontualidade = 0;
+                    }
+                    if (valueG >= valueF) {
+                        Quantidade = 1;
+                    }
+                    if (valueG < valueF) {
+                        Quantidade = 0;
+                    }
+
+                    dataDict[rowNum - 1] = {
+                        "Codigo": valueB,
+                        "Razão Social": valueC,
+                        "Inspeção": PontoInspecao,
+                        "Pontualidade": Pontualidade,
+                        "Quantidade": Quantidade,
+                    };
+                    QntObjetos++;
+                }
+            }
+        };
+
+        console.log(dataDict);
+
+        reader.readAsArrayBuffer(file);
+    });
+
+
+    function gerar() {
+        let dataArray = Object.values(dataDict)
+        const agrupadoPorCodigo = dataArray.reduce((acc, obj) => {
+            const codigo = obj.Codigo;
+            if (!acc[codigo]) {
+                acc[codigo] = [];
+            }
+            acc[codigo].push(obj);
+            return acc;
+        }, {});
+
+        console.log(agrupadoPorCodigo);
+
+    }
+
+
+
 
 </script>
 
