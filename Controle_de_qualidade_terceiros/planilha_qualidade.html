@@ -60,8 +60,8 @@
 </body>
 
 <script>
-    let NotaCorte = 7;
-    let PesoQualidade = 6;
+    let NotaCorte = 7.0;
+    let PesoQualidade = 6.0;
     let PesoQnt = 2.5;
     let PesoPontualidade = 1.5;
     let Pontualidade = 0;
@@ -74,6 +74,11 @@
     let Agrupamento = [];
     let QntObjetos = 0;
     let dataDictFinal = {};
+    let TamanhoLista = 0;
+    let agrupadoPorCodigo = [];
+    let media = 0.0;
+    const consolidatedData = {};
+
     document.getElementById('input').addEventListener('change', function (e) {
         var files = e.target.files;
         if (files.length === 0) return;
@@ -127,37 +132,92 @@
                     if (valueG < valueF) {
                         Quantidade = 0;
                     }
+                    if (!Agrupamento.includes(valueB)) {
+                        Agrupamento.push(valueB)
+                    }
 
                     dataDict[rowNum - 1] = {
                         "Codigo": valueB,
                         "Razão Social": valueC,
                         "Inspeção": PontoInspecao,
                         "Pontualidade": Pontualidade,
-                        "Quantidade": Quantidade,
+                        "Quantidade": Quantidade
                     };
-                    QntObjetos++;
+
                 }
             }
+            agrupapador()
+
+
+
         };
-
         console.log(dataDict);
-
         reader.readAsArrayBuffer(file);
-    });
+    })
+
 
 
     function gerar() {
-        let dataArray = Object.values(dataDict)
-        const agrupadoPorCodigo = dataArray.reduce((acc, obj) => {
-            const codigo = obj.Codigo;
-            if (!acc[codigo]) {
-                acc[codigo] = [];
-            }
-            acc[codigo].push(obj);
-            return acc;
-        }, {});
 
-        console.log(agrupadoPorCodigo);
+
+    }
+    function agrupapador() {
+
+        Object.values(dataDict).forEach(entry => {
+            const code = entry["Codigo"];
+            const razaoSocial = entry["Razão Social"];
+
+            // Verificar se já existe uma entrada para este código e razão social no objeto consolidado
+            if (!consolidatedData[code + razaoSocial]) {
+                // Se não existir, criar uma nova entrada
+                consolidatedData[code + razaoSocial] = {
+                    "Codigo": code,
+                    "Razão Social": razaoSocial,
+                    "Inspeção": 0,
+                    "Pontualidade": 0,
+                    "Quantidade": 0,
+                    "Count": 0
+                };
+            }
+
+            // Adicionar os valores de inspeção, pontualidade e quantidade à entrada consolidada
+            consolidatedData[code + razaoSocial]["Inspeção"] += entry["Inspeção"];
+            consolidatedData[code + razaoSocial]["Pontualidade"] += entry["Pontualidade"];
+            consolidatedData[code + razaoSocial]["Quantidade"] += entry["Quantidade"];
+            consolidatedData[code + razaoSocial]["Count"]++;
+        });
+
+        // Calcular a média e a média ponderada e determinar se está aprovado ou reprovado
+        Object.values(consolidatedData).forEach(entry => {
+            let totalInspecao = parseFloat(entry["Inspeção"]);
+            let totalPontualidade = parseFloat(entry["Pontualidade"]);
+            let totalQuantidade = parseFloat(entry["Quantidade"]);
+            let count = parseFloat(entry["Count"]);
+            totalInspecao = totalInspecao / count;
+            totalPontualidade = totalPontualidade / count;
+            totalQuantidade = totalQuantidade / count;
+            // Calcular a média
+
+            entry["Inspeção"] = parseFloat(totalInspecao);
+            entry["Pontualidade"] = parseFloat(totalPontualidade);
+            entry["Quantidade"] = parseFloat(totalQuantidade);
+
+
+            // Calcular a média
+            media = parseFloat((totalInspecao * PesoQualidade) + (totalPontualidade * PesoPontualidade) + (totalQuantidade * PesoQnt)).toFixed(2);
+            entry["IMF"] = parseFloat(media);
+
+            // Determinar se está aprovado ou reprovado
+            entry["Resultado"] = media >= NotaCorte ? "Aprovado" : "Reprovado";
+
+            // Remover a chave "Count"
+            delete entry["Count"];
+        });
+
+        // Converter o objeto consolidado em um array de objetos
+        dataDictFinal = Object.values(consolidatedData);
+
+        console.log(dataDictFinal);
 
     }
 
