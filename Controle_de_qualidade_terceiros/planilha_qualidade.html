@@ -19,20 +19,23 @@
     }
 
     #conteinerbutton {
-        height: 60px;
+        position: fixed;
+        top: 0;
         width: 100%;
-        background-color: red;
+        height: 60px;
+        background-color: rgba(7, 0, 0, 0.281);
         display: flex;
         justify-content: space-around;
         align-items: center;
-        position: fixed;
-
+        z-index: 999;
     }
 
     #conteinerTable {
         margin-top: 60px;
+        /* Adiciona margem superior igual à altura do #conteinerbutton */
         width: 100%;
         overflow-x: auto;
+        /* Adiciona rolagem horizontal caso a tabela seja muito larga */
     }
 
     table {
@@ -66,7 +69,7 @@
         padding: 8px;
         font-size: 12px;
         cursor: pointer;
-        background-color: #3498db;
+        background-color: #0075c488;
         color: #fff;
         border: none;
         text-align: center;
