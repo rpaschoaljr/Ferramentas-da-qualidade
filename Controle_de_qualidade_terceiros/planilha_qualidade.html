@@ -193,7 +193,7 @@
 
 
     function gerar() {
-
+        alert("Não desenvolvida ainda.")
 
     }
     function agrupapador() {
@@ -252,7 +252,7 @@
 
         // Converter o objeto consolidado em um array de objetos
         dataDictFinal = Object.values(consolidatedData);
-
+        dataDictFinal.sort((a, b) => (a["Razão Social"].toUpperCase() > b["Razão Social"].toUpperCase()) ? 1 : -1);
         console.log("apos receber dados final", dataDictFinal);
         criarTabela(dataDictFinal);
 
