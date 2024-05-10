@@ -24,15 +24,41 @@
         background-color: red;
         display: flex;
         justify-content: space-around;
-        /* Para alinhar os botões */
         align-items: center;
-        /* Para centralizar verticalmente */
+        position: fixed;
+
     }
 
     #conteinerTable {
-        flex-grow: 1;
+        margin-top: 60px;
         width: 100%;
-        background-color: black;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 8px;
+        text-align: left;
+        border: 1px solid #dddddd;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+        /* Cor de fundo alternada para as linhas */
+    }
+
+    tr:hover {
+        background-color: #ddd;
+        /* Cor de fundo ao passar o mouse sobre a linha */
     }
 
     .button {
@@ -80,6 +106,12 @@
     const consolidatedData = {};
 
     document.getElementById('input').addEventListener('change', function (e) {
+
+
+
+        dataDict = {};
+        console.log("datadict", dataDict);
+
         var files = e.target.files;
         if (files.length === 0) return;
 
@@ -162,7 +194,8 @@
 
     }
     function agrupapador() {
-
+        dataDictFinal = {};
+        console.log("datadictfinal", dataDictFinal);
         Object.values(dataDict).forEach(entry => {
             const code = entry["Codigo"];
             const razaoSocial = entry["Razão Social"];
@@ -217,11 +250,33 @@
         // Converter o objeto consolidado em um array de objetos
         dataDictFinal = Object.values(consolidatedData);
 
-        console.log(dataDictFinal);
+        console.log("apos receber dados final", dataDictFinal);
+        criarTabela(dataDictFinal);
 
     }
 
 
+    function criarTabela(data) {
+        let tableHTML = '<table border="1"><tr>';
+        // Adicionar cabeçalhos da tabela
+        tableHTML += '<th>Código</th><th>Razão Social</th><th>Média de parâmetro qualidade</th><th>Média de parâmetro quantidade</th><th>Média de parâmetro pontualidade</th><th>IMF</th><th>Resultado</th>';
+        tableHTML += '</tr>';
+        // Adicionar linhas da tabela com os dados
+        data.forEach(row => {
+            tableHTML += '<tr>';
+            tableHTML += `<td>${row["Codigo"]}</td>`;
+            tableHTML += `<td>${row["Razão Social"]}</td>`;
+            tableHTML += `<td>${row["Inspeção"].toFixed(5)}</td>`; // Média de parâmetro qualidade
+            tableHTML += `<td>${row["Quantidade"].toFixed(5)}</td>`; // Média de parâmetro quantidade
+            tableHTML += `<td>${row["Pontualidade"].toFixed(5)}</td>`; // Média de parâmetro pontualidade
+            tableHTML += `<td>${row["IMF"]}</td>`; // IMF
+            tableHTML += `<td>${row["Resultado"]}</td>`; // Resultado
+            tableHTML += '</tr>';
+        });
+        tableHTML += '</table>';
+        // Adiciona a tabela ao elemento com id "conteinerTable"
+        document.getElementById("conteinerTable").innerHTML = tableHTML;
+    }
 
 
 </script>
