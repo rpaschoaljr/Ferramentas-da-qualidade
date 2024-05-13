@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+
     <title>Controle da qualidade</title>
 </head>
 <style>
@@ -47,20 +50,23 @@
     td {
         padding: 8px;
         text-align: left;
-        border: 1px solid #dddddd;
+        border: 1px solid black;
     }
 
     th {
         background-color: #f2f2f2;
+        border: 1px solid black;
     }
 
     tr:nth-child(even) {
         background-color: #f2f2f2;
+        border: 1px solid black;
         /* Cor de fundo alternada para as linhas */
     }
 
     tr:hover {
         background-color: #ddd;
+        border: 1px solid black;
         /* Cor de fundo ao passar o mouse sobre a linha */
     }
 
@@ -76,6 +82,18 @@
         text-decoration: none;
         box-sizing: border-box;
         transition: background-color 0.3s;
+    }
+
+    /* Define as bordas sólidas para as células da tabela */
+    table td,
+    table th {
+        border: 1px solid #000;
+    }
+
+    /* Estiliza o texto "Reprovado" em vermelho */
+    .reprovado {
+        color: red;
+
     }
 </style>
 
@@ -113,7 +131,7 @@
 
 
         dataDict = {};
-        console.log("datadict", dataDict);
+
 
         var files = e.target.files;
         if (files.length === 0) return;
@@ -155,7 +173,7 @@
                     if (valueA === "INSPEÇÃO REPROVADA") {
                         PontoInspecao = 0;
                     }
-                    if(valueA === "INSPEÇÃO"){
+                    if (valueA === "INSPEÇÃO") {
                         PontoInspecao = 0;
                     }
                     if (valueE <= valueD) {
@@ -176,7 +194,7 @@
 
                     dataDict[rowNum - 1] = {
                         "Codigo": valueB,
-                        "Razão Social": valueC,
+                        "Razão Social": valueC.toUpperCase(),
                         "Inspeção": PontoInspecao,
                         "Pontualidade": Pontualidade,
                         "Quantidade": Quantidade
@@ -189,19 +207,84 @@
 
 
         };
-        console.log(dataDict);
+
         reader.readAsArrayBuffer(file);
     })
 
 
 
     function gerar() {
-        alert("Não desenvolvida ainda.")
+        // Cria o conteúdo HTML da tabela
+        var tableHTML = `
+            <table border="1">
+                <tr>
+                    <th>Razão Social</th>
+                    <th>Média de parâmetro qualidade</th>
+                    <th>Média de parâmetro quantidade</th>
+                    <th>Média de parâmetro pontualidade</th>
+                    <th>IMF</th>
+                    <th>Resultado</th>
+                </tr>
+        `;
+        dataDictFinal.forEach(row => {
+            tableHTML += `
+                <tr>
+                    <td>${row["Codigo"]} ${row["Razão Social"]}</td>
+                    <td>${row["Inspeção"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>
+                    <td>${row["Quantidade"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>
+                    <td>${row["Pontualidade"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>
+                    <td>${row["IMF"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>`;
+            // Adiciona a classe 'reprovado' ao campo 'Resultado' se o resultado for 'Reprovado'
+            if (row["Resultado"] === "Reprovado") {
+                tableHTML += `<td style="color: red;">${row["Resultado"]}</td>`; // Resultado
+            } else {
+                tableHTML += `<td>${row["Resultado"]}</td>`; // Resultado
+            }
+            tableHTML += `</tr>`;
+        });
+        tableHTML += `</table>`;
 
+        // Cria o conteúdo do documento do Word
+        var content = `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Relatório</title>
+                </head>
+                <body>
+                    ${tableHTML}
+                </body>
+            </html>
+        `;
+
+        // Codifica o conteúdo como um arquivo .docx
+        var encodedContent = "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64," + btoa(unescape(encodeURIComponent(content)));
+
+        // Cria um link para o documento
+        var link = document.createElement("a");
+        link.href = encodedContent;
+        link.target = "_blank"; // Abre o link em uma nova aba
+        link.download = "relatorio.docx";
+
+        // Adiciona o link à página
+        document.body.appendChild(link);
+
+        // Dispara o clique no link para iniciar o download
+        link.click();
+
+        // Remove o link da página após o download
+        document.body.removeChild(link);
     }
+
+
+
+
+
+
     function agrupapador() {
         dataDictFinal = {};
-        console.log("datadictfinal", dataDictFinal);
+
         Object.values(dataDict).forEach(entry => {
             const code = entry["Codigo"];
             const razaoSocial = entry["Razão Social"];
@@ -256,7 +339,6 @@
         // Converter o objeto consolidado em um array de objetos
         dataDictFinal = Object.values(consolidatedData);
         dataDictFinal.sort((a, b) => (a["Razão Social"].toUpperCase() > b["Razão Social"].toUpperCase()) ? 1 : -1);
-        console.log("apos receber dados final", dataDictFinal);
         criarTabela(dataDictFinal);
 
     }
@@ -265,25 +347,28 @@
     function criarTabela(data) {
         let tableHTML = '<table border="1"><tr>';
         // Adicionar cabeçalhos da tabela
-        tableHTML += '<th>Código</th><th>Razão Social</th><th>Média de parâmetro qualidade</th><th>Média de parâmetro quantidade</th><th>Média de parâmetro pontualidade</th><th>IMF</th><th>Resultado</th>';
+        tableHTML += '<th>Razão Social</th><th>Média de parâmetro qualidade</th><th>Média de parâmetro quantidade</th><th>Média de parâmetro pontualidade</th><th>IMF</th><th>Resultado</th>';
         tableHTML += '</tr>';
         // Adicionar linhas da tabela com os dados
         data.forEach(row => {
             tableHTML += '<tr>';
-            tableHTML += `<td>${row["Codigo"]}</td>`;
-            tableHTML += `<td>${row["Razão Social"]}</td>`;
-            tableHTML += `<td>${row["Inspeção"].toFixed(5)}</td>`; // Média de parâmetro qualidade
-            tableHTML += `<td>${row["Quantidade"].toFixed(5)}</td>`; // Média de parâmetro quantidade
-            tableHTML += `<td>${row["Pontualidade"].toFixed(5)}</td>`; // Média de parâmetro pontualidade
-            tableHTML += `<td>${row["IMF"]}</td>`; // IMF
-            tableHTML += `<td>${row["Resultado"]}</td>`; // Resultado
+            tableHTML += `<td>${row["Codigo"] + [" "] + row["Razão Social"]}</td>`;
+            tableHTML += `<td>${row["Inspeção"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>`; // Média de parâmetro qualidade
+            tableHTML += `<td>${row["Quantidade"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>`; // Média de parâmetro quantidade
+            tableHTML += `<td>${row["Pontualidade"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>`; // Média de parâmetro pontualidade
+            tableHTML += `<td>${row["IMF"].toFixed(2).replace(/\.?0*$/, '').replace(".", ",")}</td>`; // IMF
+            if (row["Resultado"] === "Reprovado") {
+                tableHTML += `<td class="reprovado">${row["Resultado"]}</td>`; // Resultado
+            } else {
+                tableHTML += `<td>${row["Resultado"]}</td>`; // Resultado
+            }
+
             tableHTML += '</tr>';
         });
         tableHTML += '</table>';
         // Adiciona a tabela ao elemento com id "conteinerTable"
         document.getElementById("conteinerTable").innerHTML = tableHTML;
     }
-
 
 </script>
 
